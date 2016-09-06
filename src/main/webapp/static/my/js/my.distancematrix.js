@@ -41,28 +41,39 @@ app.controller('GetMatrixCtrl', function ($scope, $http, DistanceMatrixService) 
         var unit = $scope.vm.unit != undefined ? $scope.vm.unit : '';   
         var avoid = $scope.vm.avoid != undefined ? $scope.vm.avoid : '';  
         
-        var response = DistanceMatrixService.getDistanceMatrix(appPath, origins, destinations, travelMode, language, unit, avoid);
+        var distanceMatrixPromise = DistanceMatrixService.getDistanceMatrix(appPath, origins, destinations, travelMode, language, unit, avoid);
         
-        response.then(function(data) {
-        	$scope.vm.matrix = data;
+        distanceMatrixPromise.then(function(response) {
+        	$scope.vm.matrix = response.data;
         })
     };
 
 });
 
-app.service('DistanceMatrixService', ['$http', '$log', function ($http, $log) {
+app.service('DistanceMatrixService', ['$http', '$log', '$q', function ($http, $log, $q) {
 	
+	// Use Deferred Promise
 	this.getDistanceMatrix = function (appPath, origins, destinations, travelMode, language, unit, avoid) {
+		var deferred = $q.defer();
 		
-        return $http({
-            method: 'GET',
-            url: appPath + 'getmatrix',
-            params: {origins: origins, destinations:destinations, mode:travelMode, language:language , unit:unit, avoid:avoid }
-        })   
-        .then(function(response) {
-            return response.data;
-        })
-        ;
+		var successCallback = function (data) {
+			$log.debug("DistanceMatrixService.getDistanceMatrix2(): LOOKUP SUCCEEDED, Json response = " + angular.toJson(data));
+			deferred.resolve(data);
+		};
+		
+		var errorCallback = function (reason) {
+			$log.error("DistanceMatrixService.getDistanceMatrix2(): FAILED LOOKUP, Json response =  " + angular.toJson(reason));
+			deferred.reject("Fail to search distance matrix");
+		};
+		var req = {
+				 method: 'GET',
+				 url: appPath + 'getmatrix',
+				 params: {origins: origins, destinations:destinations, mode:travelMode, language:language , unit:unit, avoid:avoid }
+				}
+
+		$http(req).then(successCallback, errorCallback);
+		
+		return deferred.promise;
 	};
 		
 }]);
