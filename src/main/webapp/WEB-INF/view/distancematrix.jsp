@@ -17,25 +17,25 @@
     <h1 class="text-primary text-center">Distance Matrix Dashboard</h1>
   </div>
 		
-  <form class="form-horizontal" rc-attempt  ng-submit="getMatrix()" name="distanceMatrixForm" novalidate >
+  <form class="form-horizontal" ng-submit="getMatrix()" name="distanceMatrixForm" novalidate >
     <div class="form-group" ng-class="{'has-error': distanceMatrixForm.origins.$invalid && 
-         (distanceMatrixForm.origins.$dirty || rc.distanceMatrixForm.attempted)}">
+         (distanceMatrixForm.origins.$dirty)}">
       <label class="control-label col-sm-2" for="origins">Origins: </label>
       <div class="col-sm-10">
         <input type="text" class="form-control" id="origins" ng-model="vm.origins" name="origins" required placeholder="Required. Please enter one or more locations separated by the pipe character (|)">
         <span class="help-block" 
          ng-show="distanceMatrixForm.origins.$invalid && 
-         (distanceMatrixForm.origins.$dirty || rc.distanceMatrixForm.attempted)">Required</span>
+         (distanceMatrixForm.origins.$dirty )">Required</span>
       </div>
     </div>
     <div class="form-group" ng-class="{'has-error': distanceMatrixForm.destinations.$invalid && 
-         (distanceMatrixForm.destinations.$dirty || rc.distanceMatrixForm.attempted)}">
+         (distanceMatrixForm.destinations.$dirty)}">
       <label class="control-label col-sm-2" for="destinations">Destinations:</label>
       <div class="col-sm-10">
         <input type="text" class="form-control" id="destinations" ng-model="vm.destinations" name="destinations" required placeholder="Required. Please enter one or more locations separated by the pipe character (|)">
         <span class="help-block" 
          ng-show="distanceMatrixForm.destinations.$invalid && 
-         (distanceMatrixForm.destinations.$dirty || rc.distanceMatrixForm.attempted)">Required</span>
+         (distanceMatrixForm.destinations.$dirty)">Required</span>
       </div>
     </div>
     <div class="form-group">
