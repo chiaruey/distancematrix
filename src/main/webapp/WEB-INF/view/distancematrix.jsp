@@ -7,6 +7,7 @@
   <script type="text/javascript" src="${requestScope.appPath}static/angular/angular.min.js"></script>
   <script type="text/javascript" src="${requestScope.appPath}static/angular-messages/angular-messages.min.js"></script>
   <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/bootstrap/css/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/my/css/master.css" />
   
 </head>
 <body ng-app="DistanceMatrix">
@@ -18,21 +19,21 @@
   </div>
 		
   <form class="form-horizontal" ng-submit="getMatrix()" name="distanceMatrixForm" novalidate >
-    <div class="form-group" ng-class="{'has-error': distanceMatrixForm.origins.$invalid && 
+    <div class="form-group required" ng-class="{'has-error': distanceMatrixForm.origins.$invalid && 
          (distanceMatrixForm.origins.$dirty)}">
       <label class="control-label col-sm-2" for="origins">Origins: </label>
       <div class="col-sm-10">
-        <input type="text" class="form-control" id="origins" ng-model="vm.origins" name="origins" required placeholder="Required. Please enter one or more locations separated by the pipe character (|)">
+        <input type="text" class="form-control" id="origins" ng-model="vm.origins" name="origins" required placeholder="Please enter one or more locations separated by the pipe character (|)">
         <span class="help-block" 
          ng-show="distanceMatrixForm.origins.$invalid && 
          (distanceMatrixForm.origins.$dirty )">Required</span>
       </div>
     </div>
-    <div class="form-group" ng-class="{'has-error': distanceMatrixForm.destinations.$invalid && 
+    <div class="form-group required" ng-class="{'has-error': distanceMatrixForm.destinations.$invalid && 
          (distanceMatrixForm.destinations.$dirty)}">
       <label class="control-label col-sm-2" for="destinations">Destinations:</label>
       <div class="col-sm-10">
-        <input type="text" class="form-control" id="destinations" ng-model="vm.destinations" name="destinations" required placeholder="Required. Please enter one or more locations separated by the pipe character (|)">
+        <input type="text" class="form-control" id="destinations" ng-model="vm.destinations" name="destinations" required placeholder="Please enter one or more locations separated by the pipe character (|)">
         <span class="help-block" 
          ng-show="distanceMatrixForm.destinations.$invalid && 
          (distanceMatrixForm.destinations.$dirty)">Required</span>
