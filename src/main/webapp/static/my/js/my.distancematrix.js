@@ -1,10 +1,12 @@
-var app = angular.module("DistanceMatrix", ['ngMessages']);
+var app = angular.module("DistanceMatrix", ['ngMessages', 'ngMaterial']);
 
-app.controller('GetMatrixCtrl', function ($scope, $http, DistanceMatrixService) {
+app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMatrixService) {
 
  
     // the transit only for Google Maps APIs Premium Plan
     $scope.vm = {
+    	origins:'',
+    	destinations:'',
         units: [{code: '', desc:''}, {code:'METRIC', desc:'metric'},{code:'IMPERIAL', desc:'imperial'}],
         avoids: [{code: '', desc:''}, {code:'TOLLS', desc:'tolls'},{code:'HIGHWAYS', desc:'highways'},{code:'FERRIES', desc:'ferries'}],
         travelModes: [{code: '', desc:''}, {code:'DRIVING', desc:'Driving'},{code:'WALKING', desc:'Walking'},{code:'BICYCLING', desc:'Bicycling'}],
@@ -45,10 +47,146 @@ app.controller('GetMatrixCtrl', function ($scope, $http, DistanceMatrixService) 
         
         distanceMatrixPromise.then(function(response) {
         	$scope.vm.matrix = response.data;
+        	$scope.vm.origins='';
+        	$scope.vm.destinations='';
         })
     };
 
+    
+    $scope.showOriginPrompt = function(ev) {
+    	$scope.errorMessage = '';
+    	$scope.infoMessage = '';
+        // Appending dialog to document.body to cover sidenav in docs app
+        var confirm = $mdDialog.prompt()
+          .title('Please add an origin address')
+          .textContent('This entered address will be validated by Google API.')
+          .placeholder('adderss')
+          .ariaLabel('address')
+          .targetEvent(ev)
+          .ok('Done')
+          .cancel('Cancel');
+
+        $mdDialog.show(confirm).then(function(result) {
+          var appPath = $scope.vm.appPath;
+          var address = result; 
+          
+          var geocodingPromise = DistanceMatrixService.getGeocodingResult(appPath, address);
+          
+          geocodingPromise.then(function(response) {
+          var valid = response.data.valid;
+          var resultCount = response.data.resultCount;
+          var formattedAddress = response.data.formattedAddress;
+          var addressType = response.data.addressType;         
+          if (valid === true) {
+        	  $scope.infoMessage = 'Successfully added a valid origin: ' + result ;
+        	  
+              if(!isBlank(formattedAddress)){
+            	  $scope.infoMessage =  $scope.infoMessage + '. [ Found Address = ' + formattedAddress + " ] ";
+         	  }        	  
+              if(!isBlank(addressType)){
+            	  $scope.infoMessage =  $scope.infoMessage + '. [ Address Type = ' + addressType + " ] " ;
+         	  }               	  
+        	  
+              if(isBlank($scope.vm.origins)){
+                	$scope.vm.origins = result;
+           	  } else {
+           		$scope.vm.origins=$scope.vm.origins + "|" + result;            		  
+           	  }
+          } else {
+        	  $scope.errorMessage = 'Invalid origin : ' + result + '. [ The system has found ' + resultCount + ' matching address(es) ]';
+          }
+          	
+          })
+          
+
+          
+        }, function() {
+          $scope.status = 'You didn\'t add an origin address.';
+        });
+      };
+      
+      
+      $scope.showDestinationPrompt = function(ev) {
+      	$scope.errorMessage = '';
+    	$scope.infoMessage = '';
+          // Appending dialog to document.body to cover sidenav in docs app
+          var confirm = $mdDialog.prompt()
+            .title('Please add a destination address')
+            .textContent('This entered address will be validated by Google API.')
+            .placeholder('adderss')
+            .ariaLabel('address')
+            .targetEvent(ev)
+            .ok('Done')
+            .cancel('Cancel');
+          
+          $mdDialog.show(confirm).then(function(result) {
+              var appPath = $scope.vm.appPath;
+              var address = result; 
+              
+              var geocodingPromise = DistanceMatrixService.getGeocodingResult(appPath, address);
+              
+              geocodingPromise.then(function(response) {
+              var valid = response.data.valid;
+              var resultCount = response.data.resultCount;
+              var formattedAddress = response.data.formattedAddress;
+              var addressType = response.data.addressType;         
+              if (valid === true) {
+            	  $scope.infoMessage = 'Successfully added a valid destination: ' + result ;
+            	  
+                  if(!isBlank(formattedAddress)){
+                	  $scope.infoMessage =  $scope.infoMessage + '. [ Found Address = ' + formattedAddress + " ] ";
+             	  }        	  
+                  if(!isBlank(addressType)){
+                	  $scope.infoMessage =  $scope.infoMessage + '. [ Address Type = ' + addressType + " ] " ;
+             	  }               	  
+            	  
+                  if(isBlank($scope.vm.destinations)){
+                    	$scope.vm.destinations = result;
+               	  } else {
+               		$scope.vm.destinations=$scope.vm.destinations + "|" + result;            		  
+               	  }
+              } else {
+            	  $scope.errorMessage = 'Invalid destination : ' + result + ' . [ The system has found ' + resultCount + ' matching address(es) ]';
+              }
+              	
+              })
+              
+
+              
+            }, function() {
+              $scope.status = 'You didn\'t add an origin address.';
+            });
+          };
+        
+        
+        $scope.clearErrorMessage = function() {
+        	$scope.errorMessage = '';
+        	
+        }
+        
+        $scope.clearInfoMessage = function() {
+        	$scope.infoMessage = '';
+        	
+        }
+
+
 });
+
+function DialogController($scope, $mdDialog) {
+  $scope.hide = function() {
+    $mdDialog.hide();
+  };
+
+  $scope.cancel = function() {
+    $mdDialog.cancel();
+  };
+
+  $scope.answer = function(answer) {
+    $mdDialog.hide(answer);
+  };
+}
+
+
 
 app.service('DistanceMatrixService', ['$http', '$log', '$q', function ($http, $log, $q) {
 	
@@ -57,12 +195,12 @@ app.service('DistanceMatrixService', ['$http', '$log', '$q', function ($http, $l
 		var deferred = $q.defer();
 		
 		var successCallback = function (data) {
-			$log.debug("DistanceMatrixService.getDistanceMatrix2(): LOOKUP SUCCEEDED, Json response = " + angular.toJson(data));
+			$log.debug("DistanceMatrixService.getDistanceMatrix(): LOOKUP SUCCEEDED, Json response = " + angular.toJson(data));
 			deferred.resolve(data);
 		};
 		
 		var errorCallback = function (reason) {
-			$log.error("DistanceMatrixService.getDistanceMatrix2(): FAILED LOOKUP, Json response =  " + angular.toJson(reason));
+			$log.error("DistanceMatrixService.getDistanceMatrix(): FAILED LOOKUP, Json response =  " + angular.toJson(reason));
 			deferred.reject("Fail to search distance matrix");
 		};
 		var req = {
@@ -75,11 +213,41 @@ app.service('DistanceMatrixService', ['$http', '$log', '$q', function ($http, $l
 		
 		return deferred.promise;
 	};
+
+	// Use Deferred Promise
+	this.getGeocodingResult = function (appPath, address) {
+		var deferred = $q.defer();
 		
+		var successCallback = function (data) {
+			$log.debug("DistanceMatrixService.getGeocodingResult(): LOOKUP SUCCEEDED, Json response = " + angular.toJson(data));
+			deferred.resolve(data);
+		};
+		
+		var errorCallback = function (reason) {
+			$log.error("DistanceMatrixService.getGeocodingResult(): FAILED LOOKUP, Json response =  " + angular.toJson(reason));
+			deferred.reject("Fail to search Geocoding for address " + address);
+		};
+		var req = {
+				 method: 'GET',
+				 url: appPath + 'geocoding',
+				 params: {address: address }
+				}
+
+		$http(req).then(successCallback, errorCallback);
+		
+		return deferred.promise;
+	};
+
 }]);
 ;
+
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
 
 function getAppPath() {
 	var appPath = $("#globalForm").find('input[name="appPath"]').val();
 	return appPath;
 }
+
+

@@ -19,7 +19,10 @@ import com.google.maps.model.DistanceMatrix;
 import com.google.maps.model.TravelMode;
 
 import my.poc.distancematrix.client.googlemap.DistanceMatrixClient;
+import my.poc.distancematrix.client.googlemap.GeocodingClient;
 import my.poc.distancematrix.web.controller.domain.DistanceMatrixResponse;
+import my.poc.distancematrix.web.controller.domain.GeocodingResponse;
+import my.poc.distancematrix.web.controller.domain.GeocodingResultBean;
 import my.poc.distancematrix.web.controller.domain.ParameterType;
 
 /**
@@ -30,6 +33,9 @@ public class DistanceMatrixController {
 	
 	@Autowired
 	private DistanceMatrixClient distanceMatrixClient;
+	
+	@Autowired
+	private GeocodingClient geocodingClient;
 	
 	@RequestMapping(value = "/getmatrix", method = GET, produces="application/json")
 	public @ResponseBody DistanceMatrixResponse getMatrix(
@@ -48,14 +54,6 @@ public class DistanceMatrixController {
 			travelMode = TravelMode.valueOf(mode.toUpperCase());
 		}
 		
-//		List<String> queryParams = new ArrayList<String>();
-//		if (StringUtils.isNotBlank(origins)) queryParams.add("origins : " + origins);
-//		if (StringUtils.isNotBlank(destinations)) queryParams.add("destinations : " + destinations);
-//		if (StringUtils.isNotBlank(mode)) queryParams.add("mode : " + mode);
-//		if (StringUtils.isNotBlank(language)) queryParams.add("language : " + language);
-//		if (StringUtils.isNotBlank(unit)) queryParams.add("unit : " + unit);
-//		if (StringUtils.isNotBlank(avoid)) queryParams.add("avoid : " + avoid);
-		
 		Set<ParameterType> queryParams = new HashSet<ParameterType>();
 		if (StringUtils.isNotBlank(origins)) queryParams.add(new ParameterType("origins" , origins));
 		if (StringUtils.isNotBlank(destinations)) queryParams.add(new ParameterType("destinations" , destinations));
@@ -70,6 +68,29 @@ public class DistanceMatrixController {
 		
 		return response;
 	}
+	
+	/**
+	 * Check if the input address is valid
+	 */
+	@RequestMapping(value = "/isvalid", method = GET, produces="application/json")
+	public @ResponseBody Boolean isValid(
+			@RequestParam(value = "address") String address) throws Exception {
+
+		return geocodingClient.isValidAddress(address);
+	}
+
+	/**
+	 * Get the Geocoding application of the input address
+	 */
+	@RequestMapping(value = "/geocoding", method = GET, produces="application/json")
+	public @ResponseBody GeocodingResponse getGeocodingResult(
+			@RequestParam(value = "address") String address) throws Exception {
+
+		Set<GeocodingResultBean> result = geocodingClient.getGeocodingResult(address);
+		GeocodingResponse response = new GeocodingResponse(result); 	
+		return response;
+	}
+
 	
 	private String[] toStringArray(String source, String delimiter) {
 		List<String> list = new ArrayList<String>();

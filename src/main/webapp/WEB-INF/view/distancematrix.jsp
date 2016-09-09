@@ -6,9 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script type="text/javascript" src="${requestScope.appPath}static/angular/angular.min.js"></script>
   <script type="text/javascript" src="${requestScope.appPath}static/angular-messages/angular-messages.min.js"></script>
+  <script type="text/javascript" src="${requestScope.appPath}static/angular-aria/angular-aria.min.js"></script> 
+  <script type="text/javascript" src="${requestScope.appPath}static/angular-animate/angular-animate.min.js"></script> 
+  <script type="text/javascript" src="${requestScope.appPath}static/angular-material/angular-material.min.js"></script> 
   <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/bootstrap/css/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/angular-material/angular-material.min.css" />
   <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/my/css/master.css" />
-  
 </head>
 <body ng-app="DistanceMatrix">
 
@@ -17,31 +20,52 @@
   <div class="page-header">
     <h1 class="text-primary text-center">Distance Matrix Dashboard</h1>
   </div>
-		
-  <form class="form-horizontal" ng-submit="getMatrix()" name="distanceMatrixForm" novalidate >
+  
+<!--   <div ng-if="status" id="status" class="form-messages">
+    <b layout="row" layout-align="center center" class="md-padding">
+      {{status}}
+    </b>
+  </div>  -->
+  <div ng-if="infoMessage" class="alert alert-info">
+  <a href="#" class="close" ng-click="clearInfoMessage()" aria-label="close">&times;</a>
+  <strong>Info!  </strong> {{infoMessage}}
+  </div> 	
+  
+  <div ng-if="errorMessage" class="alert alert-danger">
+  <a href="#" class="close" ng-click="clearErrorMessage()" aria-label="close">&times;</a>
+  <strong>Error!  </strong> {{errorMessage}}
+  </div>
+  	
+  <form class="form-horizontal"  name="distanceMatrixForm" novalidate >
     <div class="form-group required" ng-class="{'has-error': distanceMatrixForm.origins.$invalid && 
          (distanceMatrixForm.origins.$dirty)}">
-      <label class="control-label col-sm-2" for="origins">Origins: </label>
-      <div class="col-sm-10">
-        <input type="text" class="form-control" id="origins" ng-model="vm.origins" name="origins" required placeholder="Please enter one or more locations separated by the pipe character (|)">
+      <label class="control-label col-sm-2" for="origins">Origins:</label>
+      <div class="col-sm-8">
+        <input type="text" class="form-control" id="origins" disabled ng-model="vm.origins" name="origins" required placeholder="Please use the add button to add an origin (max:25)">
         <span class="help-block" 
          ng-show="distanceMatrixForm.origins.$invalid && 
          (distanceMatrixForm.origins.$dirty )">Required</span>
+      </div>
+      <div class="col-sm-1">
+      	<button ng-click="showOriginPrompt($event)" class="btn btn-info btn-block">Add</button>
       </div>
     </div>
     <div class="form-group required" ng-class="{'has-error': distanceMatrixForm.destinations.$invalid && 
          (distanceMatrixForm.destinations.$dirty)}">
       <label class="control-label col-sm-2" for="destinations">Destinations:</label>
-      <div class="col-sm-10">
-        <input type="text" class="form-control" id="destinations" ng-model="vm.destinations" name="destinations" required placeholder="Please enter one or more locations separated by the pipe character (|)">
+      <div class="col-sm-8">
+        <input type="text" class="form-control" id="destinations" disabled ng-model="vm.destinations" name="destinations" required placeholder="Please use the add button to add a destination (max:25)">
         <span class="help-block" 
          ng-show="distanceMatrixForm.destinations.$invalid && 
          (distanceMatrixForm.destinations.$dirty)">Required</span>
       </div>
+      <div class="col-sm-1">
+      	<button ng-click="showDestinationPrompt($event)" class="btn btn-info btn-block">Add</button>
+      </div>      
     </div>
     <div class="form-group">
       <label class="control-label col-sm-2" for="travelMode">Travel Mode:</label>
-      <div class="col-sm-10">
+      <div class="col-sm-8">
           <select class="form-control" ng-model="vm.travelMode" name="travelMode">
 		    <option ng-repeat="mode in vm.travelModes" value="{{mode.code}}">{{mode.desc}}</option>
 		  </select>
@@ -49,7 +73,7 @@
     </div>
     <div class="form-group">
       <label class="control-label col-sm-2" for="language">Language:</label>
-      <div class="col-sm-10">
+      <div class="col-sm-8">
          <select class="form-control" ng-model="vm.language" name="language">
 		    <option ng-repeat="language in vm.languages" value="{{language.code}}">{{language.desc}}</option>
 		  </select>
@@ -57,7 +81,7 @@
     </div>  
     <div class="form-group">
       <label class="control-label col-sm-2" for="unit">Unit:</label>
-      <div class="col-sm-10">
+      <div class="col-sm-8">
          <select class="form-control" ng-model="vm.unit" name="unit">
 		    <option ng-repeat="unit in vm.units" value="{{unit.code}}">{{unit.desc}}</option>
 		  </select>
@@ -65,15 +89,15 @@
     </div>  
     <div class="form-group">
       <label class="control-label col-sm-2" for="avoid">Avoid:</label>
-      <div class="col-sm-10">
+      <div class="col-sm-8">
          <select class="form-control" ng-model="vm.avoid" name="avoid">
 		    <option ng-repeat="avoid in vm.avoids" value="{{avoid.code}}">{{avoid.desc}}</option>
 		  </select>
       </div>
     </div>                  
     <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-primary" ng-disabled="distanceMatrixForm.origins.$invalid||distanceMatrixForm.destinations.$invalid">Submit</button>
+      <div class="col-sm-offset-2 col-sm-8">
+        <button ng-click="getMatrix()" class="btn btn-primary" ng-disabled="distanceMatrixForm.origins.$invalid||distanceMatrixForm.destinations.$invalid">Submit</button>
       </div>
     </div>
     <input type="hidden" ng-model="vm.appPath" value="${requestScope.appPath}" ng-init="vm.appPath='${requestScope.appPath}'"/>
@@ -81,7 +105,7 @@
     
  <!-- *************************************** -->
 
-	<div ng-show="vm.matrix.distanceMatrixItems.length > 0 " >
+	<div ng-show="vm.matrix.distanceMatrixItems.length > 0" >
 	  <hr />
       <h2 class="text-primary text-center">Distance Matrix Response</h2>
 	  <h4 class="text-primary">Used Query Parameters</h4>
