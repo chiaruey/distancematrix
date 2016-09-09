@@ -47,15 +47,15 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
         
         distanceMatrixPromise.then(function(response) {
         	$scope.vm.matrix = response.data;
-        	$scope.vm.origins='';
-        	$scope.vm.destinations='';
+        	resetForm($scope);
+        	resetMessage($scope, 'The system has successfully submitted the request, please scroll down for the Distance Matrix Response ');
         })
     };
 
     
     $scope.showOriginPrompt = function(ev) {
-    	$scope.errorMessage = '';
-    	$scope.infoMessage = '';
+    	resetMessage($scope);
+
         // Appending dialog to document.body to cover sidenav in docs app
         var confirm = $mdDialog.prompt()
           .title('Please add an origin address')
@@ -107,8 +107,9 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
       
       
       $scope.showDestinationPrompt = function(ev) {
-      	$scope.errorMessage = '';
-    	$scope.infoMessage = '';
+    	  resetMessage($scope);
+
+    	  
           // Appending dialog to document.body to cover sidenav in docs app
           var confirm = $mdDialog.prompt()
             .title('Please add a destination address')
@@ -245,9 +246,32 @@ function isBlank(str) {
     return (!str || /^\s*$/.test(str));
 }
 
-function getAppPath() {
+/*function getAppPath() {
 	var appPath = $("#globalForm").find('input[name="appPath"]').val();
 	return appPath;
+}*/
+
+function resetForm($scope) {
+	$scope.vm.origins='';
+	$scope.vm.destinations='';
+	$scope.vm.travelMode='';
+	$scope.vm.language='';
+	$scope.vm.unit='';
+	$scope.vm.avoid='';
+
 }
 
+function resetMessage($scope, infoMessage, errorMessage) {
+	if (isBlank(infoMessage)) {
+		$scope.infoMessage = '';
+	} else {
+		$scope.infoMessage = infoMessage;
+	}
+	
+	if (isBlank(errorMessage)) {
+		$scope.errorMessage = '';
+	} else {
+		$scope.errorMessage = errorMessage;
+	}
+}
 
