@@ -54,12 +54,15 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
 				"/static/");
 	}
 	
-
+	@Bean
+	public MainInterceptor mainInterceptor() {
+	    return new MainInterceptor();
+	}
 	
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
     	
-		registry.addInterceptor(new MainInterceptor());
+		registry.addInterceptor(mainInterceptor());
 	}
 
 	

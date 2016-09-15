@@ -9,16 +9,20 @@
   <script type="text/javascript" src="${requestScope.appPath}static/angular-aria/angular-aria.min.js"></script> 
   <script type="text/javascript" src="${requestScope.appPath}static/angular-animate/angular-animate.min.js"></script> 
   <script type="text/javascript" src="${requestScope.appPath}static/angular-material/angular-material.min.js"></script> 
+  <script type="text/javascript" src="${requestScope.appPath}static/spinner-js/version/js/spin.js"></script>
+  <script type="text/javascript" src="${requestScope.appPath}static/angular-spinner/0.8.1/js/angular-spinner.js"></script> 
   <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/bootstrap/css/bootstrap.min.css" />
   <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/angular-material/angular-material.min.css" />
   <link type="text/css" rel="stylesheet" href="${requestScope.appPath}static/my/css/master.css" />
 </head>
-<body ng-app="DistanceMatrix">
+<body ng-app="DistanceMatrix" >
 
 <div class="container" ng-controller="GetMatrixCtrl">
 
   <div class="page-header">
     <h1 class="text-primary text-center">Distance Matrix Dashboard</h1>
+    <!-- Spinner while backend processing -->
+	<span us-spinner="{radius:100, width:24, length: 32, position:'fixed'}"  spinner-key="spinner-1"></span>
   </div>
   
 <!--   <div ng-if="status" id="status" class="form-messages">
@@ -26,15 +30,21 @@
       {{status}}
     </b>
   </div>  -->
+  
   <div ng-if="infoMessage" class="alert alert-info">
   <a href="#" class="close" ng-click="clearInfoMessage()" aria-label="close">&times;</a>
   <strong>Info!  </strong> {{infoMessage}}
+  <div ng-if="!responseshown">
+  	<a ng-if="!mapshown" href="#" ng-click="showMap()" >Show Map</a><a ng-if="mapshown" href="#" ng-click="hideMap()" >Hide Map</a>
+  </div>
   </div> 	
-  
+    
+
   <div ng-if="errorMessage" class="alert alert-danger">
   <a href="#" class="close" ng-click="clearErrorMessage()" aria-label="close">&times;</a>
   <strong>Error!  </strong> {{errorMessage}}
   </div>
+  <div ng-if="mapshown"  id="map-container" class="google-map" lat="{{lat}}" long="{{lng}}" zoom={{zoom}}></div>
   	
   <form class="form-horizontal"  name="distanceMatrixForm" novalidate >
     <div class="form-group required" ng-class="{'has-error': distanceMatrixForm.origins.$invalid && 
@@ -98,14 +108,18 @@
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-8">
         <button ng-click="getMatrix()" class="btn btn-primary" ng-disabled="distanceMatrixForm.origins.$invalid||distanceMatrixForm.destinations.$invalid">Submit</button>
+
       </div>
     </div>
-    <input type="hidden" ng-model="vm.appPath" value="${requestScope.appPath}" ng-init="vm.appPath='${requestScope.appPath}'"/>
+    
+    <input type="hidden" id="appPath" value="${requestScope.appPath}" />
+    <input type="hidden" id="googleApiKey" value="${requestScope.google_api_key}" />
+
   </form>
     
  <!-- *************************************** -->
 
-	<div ng-show="vm.matrix.distanceMatrixItems.length > 0" >
+	<div ng-if="responseshown" >
 	  <hr />
       <h2 class="text-primary text-center">Distance Matrix Response</h2>
 	  <h4 class="text-primary">Used Query Parameters</h4>

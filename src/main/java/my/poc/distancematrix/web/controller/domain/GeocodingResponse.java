@@ -21,7 +21,10 @@ public class GeocodingResponse {
 				GeocodingResultBean geocodingResult = geocodingResultSet.iterator().next();
 				
 				this.formattedAddress = geocodingResult.getFormattedAddress();
-				
+				if (geocodingResult.getGeometry() != null && geocodingResult.getGeometry().getLocation() != null) {
+					LatLngBean latlng = geocodingResult.getGeometry().getLocation();
+					this.latlng = latlng;
+				}
 				
 				if (geocodingResult.getTypesSet() != null && geocodingResult.getTypesSet().size() > 0) {
 					StringBuffer sbType = new StringBuffer();
@@ -33,7 +36,7 @@ public class GeocodingResponse {
 						}
 						sbType.append(itr.next());
 					}
-					this.addressType = geocodingResult.getTypesSet().iterator().next().toString();					
+					this.addressType = sbType.toString();					
 				}
 			}
 		}
@@ -48,6 +51,8 @@ public class GeocodingResponse {
 	private String formattedAddress;
 	
 	private String addressType;
+	
+	private LatLngBean latlng;
 	
 	public Set<GeocodingResultBean> getGeocodingResultSet() {
 		return geocodingResultSet;
@@ -89,7 +94,13 @@ public class GeocodingResponse {
 		this.addressType = addressType;
 	}
 
-	
-	
-	
+	public LatLngBean getLatlng() {
+		return latlng;
+	}
+
+	public void setLatlng(LatLngBean latlng) {
+		this.latlng = latlng;
+	}
+
+
 }

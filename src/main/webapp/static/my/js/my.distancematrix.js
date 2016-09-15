@@ -1,10 +1,11 @@
-var app = angular.module("DistanceMatrix", ['ngMessages', 'ngMaterial']);
+var app = angular.module("DistanceMatrix", ['ngMessages', 'ngMaterial','angularSpinner']);
 
-app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMatrixService) {
+app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMatrixService, usSpinnerService) {
 
  
     // the transit only for Google Maps APIs Premium Plan
     $scope.vm = {
+    	loadingProcessCount: 0,
     	origins:'',
     	destinations:'',
         units: [{code: '', desc:''}, {code:'METRIC', desc:'metric'},{code:'IMPERIAL', desc:'imperial'}],
@@ -29,13 +30,42 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
 
         	      ]
     }; 
+    
+    // start spin the spinner
+    $scope.startSpin = function(){
+        usSpinnerService.spin('spinner-1');
+        $scope.vm.loadingProcessCount ++;
+    }
+    
+    // stop spin the spinner
+    $scope.stopSpin = function(){
+    	$scope.vm.loadingProcessCount --;
+    	// Stop spinner after loading
+    	if ($scope.vm.loadingProcessCount <= 0 ) {
+    		usSpinnerService.stop('spinner-1');;
+    	}
+        
+    }
       
+    // click on the show map link
+    $scope.showMap = function() {
+    	$scope.mapshown = true;
+    };
+    
+    // click on the hide map link
+    $scope.hideMap = function() {
+    	$scope.mapshown = '';
+    };
+    
+    // invoke the Distance Matrix API
     $scope.getMatrix = function () {
+    	$scope.startSpin();
+    	
         if ($scope.distanceMatrixForm.$invalid) {
             return;
         }
         
-        var appPath = $scope.vm.appPath;
+        var appPath = document.getElementById('appPath').value;
         var origins = $scope.vm.origins != undefined ? $scope.vm.origins : '';
         var destinations = $scope.vm.destinations != undefined ? $scope.vm.destinations : '';
         var travelMode = $scope.vm.travelMode != undefined ? $scope.vm.travelMode : '';
@@ -46,15 +76,19 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
         var distanceMatrixPromise = DistanceMatrixService.getDistanceMatrix(appPath, origins, destinations, travelMode, language, unit, avoid);
         
         distanceMatrixPromise.then(function(response) {
+        	$scope.stopSpin();
         	$scope.vm.matrix = response.data;
         	resetForm($scope);
         	resetMessage($scope, 'The system has successfully submitted the request, please scroll down for the Distance Matrix Response ');
+        	$scope.responseshown=true;
         })
     };
 
-    
+    // click on the origin button
     $scope.showOriginPrompt = function(ev) {
     	resetMessage($scope);
+    	$scope.responseshown='';
+    	$scope.mapshown='';
 
         // Appending dialog to document.body to cover sidenav in docs app
         var confirm = $mdDialog.prompt()
@@ -67,25 +101,36 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
           .cancel('Cancel');
 
         $mdDialog.show(confirm).then(function(result) {
-          var appPath = $scope.vm.appPath;
+        	
+        	if (isBlank(result)) {
+        		return;
+        	}
+        	$scope.startSpin();
+        	
+          var appPath = document.getElementById('appPath').value;
           var address = result; 
           
           var geocodingPromise = DistanceMatrixService.getGeocodingResult(appPath, address);
           
           geocodingPromise.then(function(response) {
+          $scope.stopSpin();
           var valid = response.data.valid;
           var resultCount = response.data.resultCount;
           var formattedAddress = response.data.formattedAddress;
-          var addressType = response.data.addressType;         
+          var addressType = response.data.addressType;    
+          
           if (valid === true) {
         	  $scope.infoMessage = 'Successfully added a valid origin: ' + result ;
-        	  
               if(!isBlank(formattedAddress)){
             	  $scope.infoMessage =  $scope.infoMessage + '. [ Found Address = ' + formattedAddress + " ] ";
          	  }        	  
               if(!isBlank(addressType)){
             	  $scope.infoMessage =  $scope.infoMessage + '. [ Address Type = ' + addressType + " ] " ;
-         	  }               	  
+         	  }
+              var zoom = findZoomByAddrType(addressType);
+        	  $scope.lat = response.data.latlng.lat;
+        	  $scope.lng = response.data.latlng.lng;     	  
+        	  $scope.zoom = zoom;
         	  
               if(isBlank($scope.vm.origins)){
                 	$scope.vm.origins = result;
@@ -98,16 +143,16 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
           	
           })
           
-
-          
         }, function() {
           $scope.status = 'You didn\'t add an origin address.';
         });
       };
       
-      
+      // click on the destination button
       $scope.showDestinationPrompt = function(ev) {
     	  resetMessage($scope);
+    	  $scope.mapshown='';
+    	  $scope.responseshown='';
 
     	  
           // Appending dialog to document.body to cover sidenav in docs app
@@ -121,34 +166,44 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
             .cancel('Cancel');
           
           $mdDialog.show(confirm).then(function(result) {
-              var appPath = $scope.vm.appPath;
+          	if (isBlank(result)) {
+        		return;
+        	}
+        	  $scope.startSpin();
+              var appPath = document.getElementById('appPath').value;
               var address = result; 
               
               var geocodingPromise = DistanceMatrixService.getGeocodingResult(appPath, address);
               
               geocodingPromise.then(function(response) {
-              var valid = response.data.valid;
-              var resultCount = response.data.resultCount;
-              var formattedAddress = response.data.formattedAddress;
-              var addressType = response.data.addressType;         
-              if (valid === true) {
-            	  $scope.infoMessage = 'Successfully added a valid destination: ' + result ;
-            	  
-                  if(!isBlank(formattedAddress)){
-                	  $scope.infoMessage =  $scope.infoMessage + '. [ Found Address = ' + formattedAddress + " ] ";
-             	  }        	  
-                  if(!isBlank(addressType)){
-                	  $scope.infoMessage =  $scope.infoMessage + '. [ Address Type = ' + addressType + " ] " ;
-             	  }               	  
-            	  
-                  if(isBlank($scope.vm.destinations)){
-                    	$scope.vm.destinations = result;
-               	  } else {
-               		$scope.vm.destinations=$scope.vm.destinations + "|" + result;            		  
-               	  }
-              } else {
-            	  $scope.errorMessage = 'Invalid destination : ' + result + ' . [ The system has found ' + resultCount + ' matching address(es) ]';
-              }
+	              $scope.stopSpin();
+	              var valid = response.data.valid;
+	              var resultCount = response.data.resultCount;
+	              var formattedAddress = response.data.formattedAddress;
+	              var addressType = response.data.addressType;   
+	              if (valid === true) {
+	            	  $scope.infoMessage = 'Successfully added a valid destination: ' + result ;
+	            	  
+	                  if(!isBlank(formattedAddress)){
+	                	  $scope.infoMessage =  $scope.infoMessage + '. [ Found Address = ' + formattedAddress + " ] ";
+	             	  }        	  
+	                  if(!isBlank(addressType)){
+	                	  $scope.infoMessage =  $scope.infoMessage + '. [ Address Type = ' + addressType + " ] " ;
+	             	  }         	  
+	                  var zoom = findZoomByAddrType(addressType);
+	            	  $scope.lat = response.data.latlng.lat;       	  
+	            	  $scope.lng = response.data.latlng.lng;            	  
+	            	  $scope.zoom = zoom;
+	            	  
+	                  if(isBlank($scope.vm.destinations)){
+	                    	$scope.vm.destinations = result;
+	               	  } else {
+	               		$scope.vm.destinations=$scope.vm.destinations + "|" + result;            		  
+	               	  }
+
+	              } else {
+	            	  $scope.errorMessage = 'Invalid destination : ' + result + ' . [ The system has found ' + resultCount + ' matching address(es) ]';
+	              }
               	
               })
               
@@ -159,34 +214,22 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
             });
           };
         
-        
+        // clear the error message
         $scope.clearErrorMessage = function() {
         	$scope.errorMessage = '';
+        	$scope.mapshown='';
         	
         }
         
+        // clear the information message
         $scope.clearInfoMessage = function() {
         	$scope.infoMessage = '';
+        	$scope.mapshown='';
         	
         }
 
 
 });
-
-function DialogController($scope, $mdDialog) {
-  $scope.hide = function() {
-    $mdDialog.hide();
-  };
-
-  $scope.cancel = function() {
-    $mdDialog.cancel();
-  };
-
-  $scope.answer = function(answer) {
-    $mdDialog.hide(answer);
-  };
-}
-
 
 
 app.service('DistanceMatrixService', ['$http', '$log', '$q', function ($http, $log, $q) {
@@ -242,14 +285,93 @@ app.service('DistanceMatrixService', ['$http', '$log', '$q', function ($http, $l
 }]);
 ;
 
+// Directive to show Google Map
+app.directive('googleMap', function($rootScope, lazyLoadApi) {
+
+  return {
+    restrict: 'CA', // restrict by class name
+    scope: {
+      mapId: '@id', // map ID
+      lat: '@', // latitude
+      long: '@', // longitude
+      zoom: '@' // zoom
+    },
+    link: function(scope, element, attrs) {
+      var location = null;
+      var map = null;
+      var mapOptions = null;
+
+      // Check if latitude and longitude are specified
+      if (angular.isDefined(scope.lat) && angular.isDefined(scope.long)&& angular.isDefined(scope.zoom)) {
+        // Loads google map script
+        lazyLoadApi.then( initializeMap )
+      }
+      
+      // Initialize the map
+      function initializeMap() {
+        location = new google.maps.LatLng(scope.lat, scope.long);
+
+        var zoom = Number(scope.zoom);
+        
+        mapOptions = {
+          zoom: zoom,
+          center: location
+        };
+
+        map = new google.maps.Map(element[0], mapOptions);
+
+        new google.maps.Marker({
+          position: location,
+          map: map,
+        });
+      }
+    }
+  };
+});
+
+// Service to show google map
+app.service('lazyLoadApi', function lazyLoadApi($window, $q) {
+  function loadScript() {
+    console.log('loadScript')
+      // use global document since Angular's $document is weak
+    var s = document.createElement('script')
+    var googleApiKey = document.getElementById('googleApiKey').value;
+    s.src = '//maps.googleapis.com/maps/api/js?key=' + googleApiKey + '&sensor=false&language=en&callback=initMap'
+    document.body.appendChild(s)
+  }
+  var deferred = $q.defer()
+
+  $window.initMap = function() {
+    deferred.resolve()
+  }
+
+  if ($window.attachEvent) {
+    $window.attachEvent('onload', loadScript)
+  } else {
+    $window.addEventListener('load', loadScript, false)
+  }
+
+  return deferred.promise
+});
+
 function isBlank(str) {
     return (!str || /^\s*$/.test(str));
 }
 
-/*function getAppPath() {
-	var appPath = $("#globalForm").find('input[name="appPath"]').val();
-	return appPath;
-}*/
+function findZoomByAddrType(addressType) {
+	var zoom = 12;
+    if(!isBlank(addressType)){	  
+  	  if (addressType.indexOf("premise") != -1 || addressType.indexOf("street_address") != -1 ) {
+  		  zoom = 15;
+  	  } else if (addressType.indexOf("locality") != -1 ) {
+  		  zoom = 10; 
+  	  } else if (addressType.indexOf("administrative_area_level_1") != -1 || addressType.indexOf("natural_feature") != -1  || addressType.indexOf("country") != -1 ) {
+  		  zoom = 6;
+  	  }
+  }
+    return zoom;
+}
+
 
 function resetForm($scope) {
 	$scope.vm.origins='';
@@ -258,7 +380,7 @@ function resetForm($scope) {
 	$scope.vm.language='';
 	$scope.vm.unit='';
 	$scope.vm.avoid='';
-
+	$scope.mapshown='';
 }
 
 function resetMessage($scope, infoMessage, errorMessage) {
@@ -273,5 +395,6 @@ function resetMessage($scope, infoMessage, errorMessage) {
 	} else {
 		$scope.errorMessage = errorMessage;
 	}
+	
 }
 
