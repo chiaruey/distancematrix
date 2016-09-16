@@ -92,8 +92,8 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
 
         // Appending dialog to document.body to cover sidenav in docs app
         var confirm = $mdDialog.prompt()
-          .title('Please add an origin address')
-          .textContent('This entered address will be validated by Google API.')
+          .title('Enter an origin address')
+          .textContent('Address will be validated by the system')
           .placeholder('adderss')
           .ariaLabel('address')
           .targetEvent(ev)
@@ -157,8 +157,8 @@ app.controller('GetMatrixCtrl', function ($scope, $http, $mdDialog,  DistanceMat
     	  
           // Appending dialog to document.body to cover sidenav in docs app
           var confirm = $mdDialog.prompt()
-            .title('Please add a destination address')
-            .textContent('This entered address will be validated by Google API.')
+            .title('Enter a destination address')
+            .textContent('Address will be validated by the system')
             .placeholder('adderss')
             .ariaLabel('address')
             .targetEvent(ev)
@@ -315,7 +315,8 @@ app.directive('googleMap', function($rootScope, lazyLoadApi) {
         
         mapOptions = {
           zoom: zoom,
-          center: location
+          center: location,
+          draggable:false
         };
 
         map = new google.maps.Map(element[0], mapOptions);

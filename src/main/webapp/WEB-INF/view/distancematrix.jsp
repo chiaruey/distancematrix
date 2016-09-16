@@ -31,18 +31,18 @@
     </b>
   </div>  -->
   
-  <div ng-if="infoMessage" class="alert alert-info">
+  <div ng-if="infoMessage" class="alert alert-info"><span class="glyphicon glyphicon-info-sign"></span>
   <a href="#" class="close" ng-click="clearInfoMessage()" aria-label="close">&times;</a>
-  <strong>Info!  </strong> {{infoMessage}}
+  {{infoMessage}}
   <div ng-if="!responseshown">
   	<a ng-if="!mapshown" href="#" ng-click="showMap()" >Show Map</a><a ng-if="mapshown" href="#" ng-click="hideMap()" >Hide Map</a>
   </div>
   </div> 	
     
 
-  <div ng-if="errorMessage" class="alert alert-danger">
+  <div ng-if="errorMessage" class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span>
   <a href="#" class="close" ng-click="clearErrorMessage()" aria-label="close">&times;</a>
-  <strong>Error!  </strong> {{errorMessage}}
+ {{errorMessage}}
   </div>
   <div ng-if="mapshown"  id="map-container" class="google-map" lat="{{lat}}" long="{{lng}}" zoom={{zoom}}></div>
   	
